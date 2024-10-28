@@ -2,15 +2,13 @@
 using OpenTK.Windowing.Desktop;
 using OpenTK.Graphics.OpenGL;
 using System;
+using OpenTK.Windowing.Common;
 
 public class Game : GameWindow
 {
-    public Game() : base(new GameWindowSettings(), new NativeWindowSettings()
+    public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings)
     {
-        Size = new OpenTK.Mathematics.Vector2i(800, 600),
-        Title = "My OpenTK Game"
-    })
-    {
+        
     }
 
     /**
@@ -20,19 +18,42 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
-        GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f); // Цвет фона с альфа-каналом
-        GL.Enable(EnableCap.DepthTest); // Включаем тест глубины
+    }
+
+    /**
+     * Вызывается при изменении размера окна.
+     */
+    protected override void OnResize(ResizeEventArgs e)
+    {
+        base.OnResize(e);
+    }
+
+    /**
+     * Метод для учёта обновлений в кадре.
+     */
+    protected override void OnUpdateFrame(FrameEventArgs args)
+    {
+        base.OnUpdateFrame(args);
     }
 
     /**
      * Вызывается при каждом рендеринге кадра.
      * Метод отвечает за отрисовку сцены. 
      */
-    protected override void OnRenderFrame(OpenTK.Windowing.Common.FrameEventArgs e)
+    protected override void OnRenderFrame(FrameEventArgs e)
     {
-        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-        // Рендеринг объектов здесь
-
+        GL.ClearColor(0.5f, 0.5f, 0.5f, 0.5f); // Цвет фона с альфа-каналом
+        GL.Clear(ClearBufferMask.ColorBufferBit);
+        //GL.Enable(EnableCap.DepthTest); // Включаем тест глубины
         SwapBuffers();
+        base.OnRenderFrame(e);
+    }
+
+    /**
+     * Метод отвечает за удаление загруженных при инициализации ресурсов.
+     */
+    protected override void OnUnload()
+    {
+        base.OnUnload();
     }
 }
