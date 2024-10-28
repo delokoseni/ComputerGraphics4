@@ -3,6 +3,8 @@ using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Assimp;
 using System.Collections.Generic;
+using OpenTK.Mathematics;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 
 public class Game : GameWindow
 {
@@ -10,11 +12,16 @@ public class Game : GameWindow
     private int _vertexArrayObject;
     private List<float> _vertices;
 
+    private Vector3 _cameraPosition;
+    private float _cameraYaw;
+    private float _cameraPitch;
+
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
         VSync = VSyncMode.On;
-        CursorState = CursorState.Hidden;
+        CursorState = CursorState.Grabbed; // Убираем курсор и захватываем его
+        _cameraPosition = new Vector3(0, 0, 3); // Начальная позиция камеры
     }
 
     /**
@@ -67,7 +74,6 @@ public class Game : GameWindow
         }
     }
 
-
     private void SetupBuffers()
     {
         _vertexArrayObject = GL.GenVertexArray();
@@ -90,6 +96,11 @@ public class Game : GameWindow
     protected override void OnResize(ResizeEventArgs e)
     {
         base.OnResize(e);
+        GL.Viewport(0, 0, e.Width, e.Height);
+        // Настройка матрицы перспективы
+        Matrix4 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(45), (float)e.Width / e.Height, 0.1f, 100f);
+        GL.MatrixMode(MatrixMode.Projection);
+        GL.LoadMatrix(ref projection);
     }
 
     /**
@@ -97,6 +108,18 @@ public class Game : GameWindow
      */
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+        // Управление камерой
+        if (KeyboardState.IsKeyDown(Keys.W))
+            _cameraPosition -= Vector3.UnitZ * 0.1f;
+        if (KeyboardState.IsKeyDown(Keys.S))
+            _cameraPosition += Vector3.UnitZ * 0.1f;
+        if (KeyboardState.IsKeyDown(Keys.A))
+            _cameraPosition -= Vector3.UnitX * 0.1f;
+        if (KeyboardState.IsKeyDown(Keys.D))
+            _cameraPosition += Vector3.UnitX * 0.1f;
+        if (KeyboardState.IsKeyDown(Keys.Escape))
+            Close();
+
         base.OnUpdateFrame(args);
     }
 
@@ -108,6 +131,11 @@ public class Game : GameWindow
     {
         GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit);
+
+        // Установка матрицы видового преобразования
+        Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + new Vector3(0, 0, -1), Vector3.UnitY);
+        GL.MatrixMode(MatrixMode.Modelview);
+        GL.LoadMatrix(ref view);
 
         GL.BindVertexArray(_vertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Triangles, 0, _vertices.Count / 3);
