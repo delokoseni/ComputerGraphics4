@@ -15,6 +15,8 @@ public class Game : GameWindow
     private Vector3 _cameraPosition;
     private float _cameraYaw;
     private float _cameraPitch;
+    private float _sensitivity = 0.001f;
+    private bool _isMouseMoving; // Добавляем переменную для отслеживания движения мыши
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
@@ -106,22 +108,57 @@ public class Game : GameWindow
     /**
      * Метод для учёта обновлений в кадре.
      */
+    /**
+ * Метод для учёта обновлений в кадре.
+ */
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
         // Управление камерой
+        Vector3 front = new Vector3(
+            (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch)))
+        ).Normalized();
+
+        Vector3 right = Vector3.Cross(front, Vector3.UnitY).Normalized(); // Вектор вправо
+        Vector3 up = Vector3.Cross(right, front).Normalized(); // Вектор вверх
+
         if (KeyboardState.IsKeyDown(Keys.W))
-            _cameraPosition -= Vector3.UnitZ * 0.1f;
+            _cameraPosition += front * 0.1f; // Движение вперед
         if (KeyboardState.IsKeyDown(Keys.S))
-            _cameraPosition += Vector3.UnitZ * 0.1f;
+            _cameraPosition -= front * 0.1f; // Движение назад
         if (KeyboardState.IsKeyDown(Keys.A))
-            _cameraPosition -= Vector3.UnitX * 0.1f;
+            _cameraPosition -= right * 0.1f; // Движение влево
         if (KeyboardState.IsKeyDown(Keys.D))
-            _cameraPosition += Vector3.UnitX * 0.1f;
+            _cameraPosition += right * 0.1f; // Движение вправо
         if (KeyboardState.IsKeyDown(Keys.Escape))
             Close();
 
+        // Обработка вращения камеры с помощью мыши
+        var mouseState = MouseState;
+        float deltaX = mouseState.X - (Size.X / 2); // Текущая позиция мыши по X
+        float deltaY = mouseState.Y - (Size.Y / 2); // Текущая позиция мыши по Y
+
+        if (mouseState.IsButtonDown(MouseButton.Left)) // Проверка нажатия кнопки мыши
+        {
+            _cameraYaw += deltaX * _sensitivity;
+            _cameraPitch -= deltaY * _sensitivity;
+
+            // Ограничиваем угол наклона, чтобы предотвратить переворот камеры
+            _cameraPitch = MathHelper.Clamp(_cameraPitch, -89f, 89f); // Установите правильные ограничения
+
+            CursorState = CursorState.Grabbed; // Захватываем курсор для отслеживания
+            //GLFW.SetCursorPos(WindowPtr, Size.X / 2, Size.Y / 2); // Перемещаем курсор в центр окна
+        }
+        else
+        {
+            CursorState = CursorState.Normal; // Возвращаем курсор в обычное состояние
+        }
+
         base.OnUpdateFrame(args);
     }
+
+
 
     /**
      * Вызывается при каждом рендеринге кадра.
@@ -133,7 +170,13 @@ public class Game : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
         // Установка матрицы видового преобразования
-        Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + new Vector3(0, 0, -1), Vector3.UnitY);
+        Vector3 front = new Vector3(
+            (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch)))
+        ).Normalized();
+
+        Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + front, Vector3.UnitY);
         GL.MatrixMode(MatrixMode.Modelview);
         GL.LoadMatrix(ref view);
 
