@@ -15,7 +15,7 @@ public class Game : GameWindow
     private Vector3 _cameraPosition;
     private float _cameraYaw;
     private float _cameraPitch;
-    private float _sensitivity = 0.001f;
+    private float _sensitivity = 0.05f;
     private bool _isMouseMoving; // Добавляем переменную для отслеживания движения мыши
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -108,11 +108,10 @@ public class Game : GameWindow
     /**
      * Метод для учёта обновлений в кадре.
      */
-    /**
- * Метод для учёта обновлений в кадре.
- */
     protected override void OnUpdateFrame(FrameEventArgs args)
     {
+        base.OnUpdateFrame(args);
+
         // Управление камерой
         Vector3 front = new Vector3(
             (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
@@ -136,29 +135,25 @@ public class Game : GameWindow
 
         // Обработка вращения камеры с помощью мыши
         var mouseState = MouseState;
-        float deltaX = mouseState.X - (Size.X / 2); // Текущая позиция мыши по X
-        float deltaY = mouseState.Y - (Size.Y / 2); // Текущая позиция мыши по Y
 
         if (mouseState.IsButtonDown(MouseButton.Left)) // Проверка нажатия кнопки мыши
         {
+            float deltaX = mouseState.X - (Size.X / 2); // Текущая позиция мыши по X
+            float deltaY = mouseState.Y - (Size.Y / 2); // Текущая позиция мыши по Y
+
             _cameraYaw += deltaX * _sensitivity;
             _cameraPitch -= deltaY * _sensitivity;
 
             // Ограничиваем угол наклона, чтобы предотвратить переворот камеры
-            _cameraPitch = MathHelper.Clamp(_cameraPitch, -89f, 89f); // Установите правильные ограничения
-
+            _cameraPitch = MathHelper.Clamp(_cameraPitch, -60f, 60f); // Установите правильные ограничения
             CursorState = CursorState.Grabbed; // Захватываем курсор для отслеживания
-            //GLFW.SetCursorPos(WindowPtr, Size.X / 2, Size.Y / 2); // Перемещаем курсор в центр окна
+            // Сброс позиции курсора в центр окна
+            MousePosition = new Vector2(Size.X / 2, Size.Y / 2);
         }
-        else
-        {
-            CursorState = CursorState.Normal; // Возвращаем курсор в обычное состояние
-        }
-
-        base.OnUpdateFrame(args);
+        CursorState = CursorState.Normal; // Захватываем курсор для отслеживания
+        // Центруем курсор
+        MousePosition = new Vector2(Size.X / 2, Size.Y / 2);
     }
-
-
 
     /**
      * Вызывается при каждом рендеринге кадра.
