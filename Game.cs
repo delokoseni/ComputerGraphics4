@@ -18,6 +18,10 @@ public class Game : GameWindow
     private float _sensitivity = 0.05f;
     private bool _isMouseMoving; // Добавляем переменную для отслеживания движения мыши
 
+    private int _floorVertexBufferObject;
+    private int _floorVertexArrayObject;
+    private List<float> _floorVertices;
+
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
@@ -35,6 +39,7 @@ public class Game : GameWindow
         base.OnLoad();
         LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
         SetupBuffers();
+        SetupFloorBuffers();
     }
 
     private void LoadModel(string path)
@@ -91,6 +96,32 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         GL.BindVertexArray(0);
     }
+
+    private void SetupFloorBuffers()
+    {
+        _floorVertices = new List<float>
+    {
+
+        -50f, 0f, -50f,
+         50f, 0f, -50f,
+         50f, 0f, 50f,
+        -50f, 0f, 50f,
+    };
+
+        _floorVertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_floorVertexArrayObject);
+
+        _floorVertexBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _floorVertexBufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, _floorVertices.Count * sizeof(float), _floorVertices.ToArray(), BufferUsageHint.StaticDraw);
+
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        GL.EnableVertexAttribArray(0);
+
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        GL.BindVertexArray(0);
+    }
+
 
     /**
      * Вызывается при изменении размера окна.
@@ -164,6 +195,11 @@ public class Game : GameWindow
         GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
+        // Отрисовка пола
+        GL.BindVertexArray(_floorVertexArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
+        GL.BindVertexArray(0);
+
         // Установка матрицы видового преобразования
         Vector3 front = new Vector3(
             (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
@@ -190,6 +226,8 @@ public class Game : GameWindow
     {
         GL.DeleteVertexArray(_vertexArrayObject);
         GL.DeleteBuffer(_vertexBufferObject);
+        GL.DeleteVertexArray(_floorVertexArrayObject); 
+        GL.DeleteBuffer(_floorVertexBufferObject);
         base.OnUnload();
     }
 }
