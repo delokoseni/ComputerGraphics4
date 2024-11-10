@@ -22,6 +22,10 @@ public class Game : GameWindow
     private int _floorVertexArrayObject;
     private List<float> _floorVertices;
 
+    private int _roofVertexBufferObject;
+    private int _roofVertexArrayObject;
+    private List<float> _roofVertices;
+
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
@@ -40,6 +44,7 @@ public class Game : GameWindow
         LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
         SetupBuffers();
         SetupFloorBuffers();
+        SetupRoofBuffers();
     }
 
     private void LoadModel(string path)
@@ -56,7 +61,7 @@ public class Game : GameWindow
             foreach (var vertex in mesh.Vertices)
             {
                 _vertices.Add(vertex.X);
-                _vertices.Add(vertex.Y);
+                _vertices.Add(vertex.Y + 300);
                 _vertices.Add(vertex.Z);
 
                 // Обновите минимумы и максимумы
@@ -102,10 +107,10 @@ public class Game : GameWindow
         _floorVertices = new List<float>
     {
 
-        -50f, 0f, -50f,
-         50f, 0f, -50f,
-         50f, 0f, 50f,
-        -50f, 0f, 50f,
+        -25f, 0f, -25f,
+         25f, 0f, -25f,
+         25f, 0f, 25f,
+        -25f, 0f, 25f,
     };
 
         _floorVertexArrayObject = GL.GenVertexArray();
@@ -114,6 +119,31 @@ public class Game : GameWindow
         _floorVertexBufferObject = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, _floorVertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _floorVertices.Count * sizeof(float), _floorVertices.ToArray(), BufferUsageHint.StaticDraw);
+
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        GL.EnableVertexAttribArray(0);
+
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        GL.BindVertexArray(0);
+    }
+
+    private void SetupRoofBuffers()
+    {
+        _roofVertices = new List<float>
+    {
+
+        -25f, 25f, -25f,
+         25f, 25f, -25f,
+         25f, 25f, 25f,
+        -25f, 25f, 25f,
+    };
+
+        _roofVertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_roofVertexArrayObject);
+
+        _roofVertexBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _roofVertexBufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, _roofVertices.Count * sizeof(float), _roofVertices.ToArray(), BufferUsageHint.StaticDraw);
 
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         GL.EnableVertexAttribArray(0);
@@ -198,6 +228,11 @@ public class Game : GameWindow
         // Отрисовка пола
         GL.BindVertexArray(_floorVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
+        GL.BindVertexArray(0);
+
+        // Отрисовка пола
+        GL.BindVertexArray(_roofVertexArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
         GL.BindVertexArray(0);
 
         // Установка матрицы видового преобразования
