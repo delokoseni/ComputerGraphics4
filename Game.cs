@@ -5,6 +5,8 @@ using Assimp;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
+using System.Drawing;                
+using System.Drawing.Imaging;
 
 public class Game : GameWindow
 {
@@ -26,6 +28,8 @@ public class Game : GameWindow
     private int _roofVertexArrayObject;
     private List<float> _roofVertices;
 
+    private int _textureId;
+
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
@@ -42,6 +46,7 @@ public class Game : GameWindow
     {
         base.OnLoad();
         LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
+        LoadTexture("C:/Users/artur/source/repos/ComputerGraphics4/hungarian-point-flooring_albedo.png");
         SetupBuffers();
         SetupFloorBuffers();
         SetupRoofBuffers();
@@ -106,11 +111,10 @@ public class Game : GameWindow
     {
         _floorVertices = new List<float>
     {
-
-        -25f, 0f, -25f,
-         25f, 0f, -25f,
-         25f, 0f, 25f,
-        -25f, 0f, 25f,
+        -25f, 0f, -25f,  0f, 0f,
+        25f, 0f, -25f,  1f, 0f,
+        25f, 0f, 25f,   1f, 1f,
+        -25f, 0f, 25f,  0f, 1f
     };
 
         _floorVertexArrayObject = GL.GenVertexArray();
@@ -120,12 +124,16 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, _floorVertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _floorVertices.Count * sizeof(float), _floorVertices.ToArray(), BufferUsageHint.StaticDraw);
 
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
         GL.EnableVertexAttribArray(0);
+
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        GL.EnableVertexAttribArray(1);
 
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         GL.BindVertexArray(0);
     }
+
 
     private void SetupRoofBuffers()
     {
@@ -226,11 +234,13 @@ public class Game : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
         // Отрисовка пола
+        GL.BindTexture(TextureTarget.Texture2D, _textureId);  // Привязываем текстуру перед отрисовкой
+
         GL.BindVertexArray(_floorVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
         GL.BindVertexArray(0);
 
-        // Отрисовка пола
+        // Отрисовка потолка
         GL.BindVertexArray(_roofVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
         GL.BindVertexArray(0);
@@ -264,5 +274,24 @@ public class Game : GameWindow
         GL.DeleteVertexArray(_floorVertexArrayObject); 
         GL.DeleteBuffer(_floorVertexBufferObject);
         base.OnUnload();
+    }
+
+    private void LoadTexture(string path)
+    {
+        // Загружаем текстуру
+        _textureId = GL.GenTexture();
+        GL.BindTexture(TextureTarget.Texture2D, _textureId);
+
+        using (var image = new Bitmap(path))
+        {
+            var data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height),
+                ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
+                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+            image.UnlockBits(data);
+        }
+
+        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
+        GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 }
