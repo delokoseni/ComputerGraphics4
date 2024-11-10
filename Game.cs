@@ -276,6 +276,19 @@ public class Game : GameWindow
         GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
+        // Установка матрицы видового преобразования
+        Vector3 front = new Vector3(
+            (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraPitch))),
+            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch)))
+        ).Normalized();
+
+        Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + front, Vector3.UnitY);
+        GL.MatrixMode(MatrixMode.Modelview);
+        GL.LoadMatrix(ref view);
+
+        //GL.UseProgram(_shaderProgram);
+
         // Отрисовка пола
         GL.BindTexture(TextureTarget.Texture2D, _textureId);  // Привязываем текстуру перед отрисовкой
 
@@ -288,19 +301,8 @@ public class Game : GameWindow
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
         GL.BindVertexArray(0);
 
-        // Установка матрицы видового преобразования
-        Vector3 front = new Vector3(
-            (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
-            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraPitch))),
-            (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch)))
-        ).Normalized();
-
-        Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + front, Vector3.UnitY);
-        GL.MatrixMode(MatrixMode.Modelview);
-        GL.LoadMatrix(ref view);
-
         GL.BindVertexArray(_vertexArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Triangles, 0, _vertices.Count / 3);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _vertices.Count / 3);
         GL.BindVertexArray(0);
 
         SwapBuffers();
