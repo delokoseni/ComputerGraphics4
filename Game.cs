@@ -45,6 +45,8 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
+        float[] borderColor = { 1.0f, 1.0f, 0.0f, 1.0f };
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, borderColor);
         LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
         LoadTexture("C:/Users/artur/source/repos/ComputerGraphics4/hungarian-point-flooring_albedo.png");
         SetupBuffers();
@@ -111,10 +113,11 @@ public class Game : GameWindow
     {
         _floorVertices = new List<float>
     {
-        -25f, 0f, -25f,  0f, 0f,
-        25f, 0f, -25f,  1f, 0f,
-        25f, 0f, 25f,   1f, 1f,
-        -25f, 0f, 25f,  0f, 1f
+        // Позиции               // Текстурные координаты
+        -25f, 0f, -25f, 0.0f, 0.0f, // Нижний левый угол
+        25f, 0f, -25f, 1.0f, 0.0f,  // Нижний правый угол
+        25f, 0f, 25f, 1.0f, 1.0f,   // Верхний правый угол
+        -25f, 0f, 25f, 0.0f, 1.0f   // Верхний левый угол
     };
 
         _floorVertexArrayObject = GL.GenVertexArray();
@@ -124,15 +127,18 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, _floorVertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _floorVertices.Count * sizeof(float), _floorVertices.ToArray(), BufferUsageHint.StaticDraw);
 
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
+        // Вершинные атрибуты
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0); // Позиции
         GL.EnableVertexAttribArray(0);
 
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float));
+        // Текстурные атрибуты
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 3 * sizeof(float)); // UV
         GL.EnableVertexAttribArray(1);
 
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         GL.BindVertexArray(0);
     }
+
 
 
     private void SetupRoofBuffers()
