@@ -30,6 +30,8 @@ public class Game : GameWindow
 
     private int _textureId;
 
+    private int _shaderProgram;
+
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
     {
@@ -49,10 +51,45 @@ public class Game : GameWindow
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, borderColor);
         LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
         LoadTexture("C:/Users/artur/source/repos/ComputerGraphics4/hungarian-point-flooring_albedo.png");
+        LoadShaders();
         SetupBuffers();
         SetupFloorBuffers();
         SetupRoofBuffers();
     }
+
+    private int CompileShader(string shaderSource, ShaderType type)
+    {
+        int shader = GL.CreateShader(type);
+        GL.ShaderSource(shader, shaderSource);
+        GL.CompileShader(shader);
+
+        GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
+        if (success == 0)
+        {
+            string infoLog = GL.GetShaderInfoLog(shader);
+            throw new Exception($"Ошибка компиляции шейдера: {infoLog}");
+        }
+
+        return shader;
+    }
+
+    private void LoadShaders()
+    {
+        string vertexShaderSource = System.IO.File.ReadAllText("C:/Users/artur/source/repos/ComputerGraphics4/Shaders/shader.vert");
+        string fragmentShaderSource = System.IO.File.ReadAllText("C:/Users/artur/source/repos/ComputerGraphics4/Shaders/shader.frag");
+
+        int vertexShader = CompileShader(vertexShaderSource, ShaderType.VertexShader);
+        int fragmentShader = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
+
+        _shaderProgram = GL.CreateProgram();
+        GL.AttachShader(_shaderProgram, vertexShader);
+        GL.AttachShader(_shaderProgram, fragmentShader);
+        GL.LinkProgram(_shaderProgram);
+
+        GL.DeleteShader(vertexShader);
+        GL.DeleteShader(fragmentShader);
+    }
+
 
     private void LoadModel(string path)
     {
