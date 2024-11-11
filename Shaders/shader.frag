@@ -1,10 +1,18 @@
-#version 330 core
-out vec4 FragColor;
+#version 330
 
-in vec2 TexCoord;
-uniform sampler2D texture1;
+out vec4 outputColor;
+
+in vec2 texCoord;
+
+// sampler2d — это представление текстуры в шейдере.
+// Каждый sampler привязан к текстурному блоку (текстурные блоки описаны в Texture.cs в функции Use).
+// По умолчанию блок - 0, поэтому никакая кодовая настройка на самом деле не требуется.
+// Несколько семплеров будут продемонстрированы в разделе 1.5.
+uniform sampler2D texture0;
 
 void main()
 {
-    FragColor = texture(texture1, TexCoord);
+    // Чтобы использовать текстуру, вызывается функция texture().
+    // Она принимает два параметра: семплер для использования и vec2, используемый в качестве текстурных координат.
+    outputColor = texture(texture0, texCoord);
 }

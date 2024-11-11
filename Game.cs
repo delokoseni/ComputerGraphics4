@@ -7,6 +7,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using System.Drawing;                
 using System.Drawing.Imaging;
+using ComputerGraphics4;
 
 public class Game : GameWindow
 {
@@ -31,6 +32,10 @@ public class Game : GameWindow
     private int _textureId;
 
     private int _shaderProgram;
+
+    private Shader _shader;
+
+    private Texture _texture;
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
