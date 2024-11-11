@@ -33,6 +33,8 @@ public class Game : GameWindow
     private int _roofVertexArrayObject;
     private List<float> _roofVertices;
 
+    float[] lightPosition = { 20.0f, 5.0f, 20.0f, 1.0f };
+
     private Shader _shader;
 
     private Texture _texture;
@@ -42,7 +44,7 @@ public class Game : GameWindow
     {
         VSync = VSyncMode.On;
         CursorState = CursorState.Grabbed; // Убираем курсор и захватываем его
-        _cameraPosition = new Vector3(0, 0, 3); // Начальная позиция камеры
+        _cameraPosition = new Vector3(0, 1, 3); // Начальная позиция камеры
     }
 
     /**
@@ -52,13 +54,35 @@ public class Game : GameWindow
     protected override void OnLoad()
     {
         base.OnLoad();
-        float[] borderColor = { 1.0f, 1.0f, 0.0f, 1.0f };
+
+        // Инициализация освещения
+        GL.Enable(EnableCap.Lighting);
+        GL.Enable(EnableCap.Light0); // Включаем первый источник света
+
+        // Установка свойств источника света
+        float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет (белый)
+        float[] lightSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем зеркальный свет (белый)
+
+        GL.Light(LightName.Light0, LightParameter.Position, lightPosition);
+        GL.Light(LightName.Light0, LightParameter.Diffuse, lightDiffuse);
+        GL.Light(LightName.Light0, LightParameter.Specular, lightSpecular);
+
+        // Установка свойств материала для объектов
+        float[] materialDiffuse = { 0.8f, 0.5f, 0.3f, 1.0f }; // Диффузный цвет материала
+        float[] materialSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Зеркальный цвет материала
+        float shininess = 50.0f; // Гладкость поверхности
+
+        GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, materialDiffuse);
+        GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, materialSpecular);
+        GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, shininess);
+
+
         Vector3D pos = new Vector3D(0.0f, 0.0f, 0.0f);
         _coachVertices = new List<float>();
         LoadModel("Models/couch.obj", _coachVertices, pos);
         SetupBuffers(_coachVertices, out _coachBufferObject, out _coachArrayObject);
 
-        Vector3D pos1 = new Vector3D(5.0f, -2.5f, 0.0f);
+        Vector3D pos1 = new Vector3D(2.0f, -2.5f, -1.0f);
         _tableandchairsVertices = new List<float>();
         LoadModel("Models/Table And Chairs.obj", _tableandchairsVertices, pos1);
         SetupBuffers(_tableandchairsVertices, out _tableandchairsBufferObject, out _tableandchairsArrayObject);
@@ -128,10 +152,10 @@ public class Game : GameWindow
         _floorVertices = new List<float>
     {
         // Позиции               // Текстурные координаты
-        -25f, 0f, -25f, 0.0f, 0.0f, // Нижний левый угол
-        25f, 0f, -25f, 1.0f, 0.0f,  // Нижний правый угол
-        25f, 0f, 25f, 1.0f, 1.0f,   // Верхний правый угол
-        -25f, 0f, 25f, 0.0f, 1.0f   // Верхний левый угол
+        -4f, 0f, -4f, 0.0f, 0.0f, // Нижний левый угол
+        4f, 0f, -4f, 1.0f, 0.0f,  // Нижний правый угол
+        4f, 0f, 4f, 1.0f, 1.0f,   // Верхний правый угол
+        -4f, 0f, 4f, 0.0f, 1.0f   // Верхний левый угол
     };
 
         _floorVertexArrayObject = GL.GenVertexArray();
@@ -160,10 +184,10 @@ public class Game : GameWindow
         _roofVertices = new List<float>
     {
 
-        -25f, 25f, -25f,
-         25f, 25f, -25f,
-         25f, 25f, 25f,
-        -25f, 25f, 25f,
+        -4f, 3f, -4f,
+         4f, 3f, -4f,
+         4f, 3f, 4f,
+        -4f, 3f, 4f,
     };
 
         _roofVertexArrayObject = GL.GenVertexArray();
@@ -250,11 +274,9 @@ public class Game : GameWindow
      */
     protected override void OnRenderFrame(FrameEventArgs e)
     {
-        // Очистка экрана
         GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
         GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-        // Установка матрицы видового преобразования
         Vector3 front = new Vector3(
             (float)(Math.Cos(MathHelper.DegreesToRadians(_cameraYaw)) * Math.Cos(MathHelper.DegreesToRadians(_cameraPitch))),
             (float)(Math.Sin(MathHelper.DegreesToRadians(_cameraPitch))),
@@ -265,35 +287,49 @@ public class Game : GameWindow
         GL.MatrixMode(MatrixMode.Modelview);
         GL.LoadMatrix(ref view);
 
-        GL.Enable(EnableCap.DepthTest); //Тестирование глубины, так объекты "непрозрачны"
+        GL.Enable(EnableCap.DepthTest);
+
+        // Установка параметров источника света перед отрисовкой объектов
+        GL.Light(LightName.Light0, LightParameter.Position, lightPosition);
 
         // Отрисовка пола
-        GL.Color3(0.8f, 0.52f, 0.25f);
-        GL.BindVertexArray(_floorVertexArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
-        GL.BindVertexArray(0);
+        DrawFloor();
 
         // Отрисовка потолка
-        GL.Color3(0.95f, 0.87f, 0.68f);
-        GL.BindVertexArray(_roofVertexArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
-        GL.BindVertexArray(0);
+        DrawRoof();
 
-        // Отрисовка дивана
-        GL.Color3(1.0f, 1.0f, 1.0f);
-        GL.BindVertexArray(_coachArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _coachVertices.Count / 3); // Отрисовываем диван
-        GL.BindVertexArray(0);
+        // Отрисовка объектов (диван и стол)
+        DrawObjects();
 
-        // Отрисовка стола и стульев
-        GL.BindVertexArray(_tableandchairsArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _tableandchairsVertices.Count / 3); // Отрисовываем стол и стулья
-        GL.BindVertexArray(0);
-
-        // Обмен буферов
         SwapBuffers();
 
         base.OnRenderFrame(e);
+    }
+
+    private void DrawFloor()
+    {
+        GL.Color3(0.8f, 0.52f, 0.25f); // Светло-коричневый цвет для пола
+        GL.BindVertexArray(_floorVertexArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
+    }
+
+    private void DrawRoof()
+    {
+        GL.Color3(0.95f, 0.87f, 0.68f); // Бежевый цвет для потолка
+        GL.BindVertexArray(_roofVertexArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
+    }
+
+    private void DrawObjects()
+    {
+        // Отрисовка дивана
+        GL.Color3(1.0f, 1.0f, 1.0f);
+        GL.BindVertexArray(_coachArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _coachVertices.Count / 3);
+
+        // Отрисовка стола и стульев
+        GL.BindVertexArray(_tableandchairsArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _tableandchairsVertices.Count / 3);
     }
 
     /**
