@@ -33,6 +33,10 @@ public class Game : GameWindow
     private int _roofVertexArrayObject;
     private List<float> _roofVertices;
 
+    private int _wallVertexBufferObject;
+    private int _wallVertexArrayObject;
+    private List<float> _wallVertices;
+
     float[] lightPosition = { 20.0f, 5.0f, 20.0f, 1.0f };
 
     private Shader _shader;
@@ -89,6 +93,7 @@ public class Game : GameWindow
 
         SetupFloorBuffers();
         SetupRoofBuffers();
+        SetupWallBuffers();
     }
 
     private void LoadModel(string path, List<float> vertices, Vector3D position)
@@ -204,6 +209,56 @@ public class Game : GameWindow
         GL.BindVertexArray(0);
     }
 
+    private void SetupWallBuffers()
+    {
+        // Определяем координаты стен
+        _wallVertices = new List<float>
+    {
+        // Передняя стена
+        -4f, 0f, -4f,
+        -4f, 3f, -4f,
+         4f, 3f, -4f,
+         4f, 0f, -4f,
+
+        // Задняя стена
+        -4f, 0f, 4f,
+        -4f, 3f, 4f,
+         4f, 3f, 4f,
+         4f, 0f, 4f,
+
+        // Левая стена
+        -4f, 0f, -4f,
+        -4f, 3f, -4f,
+        -4f, 3f, 4f,
+        -4f, 0f, 4f,
+
+        // Правая стена
+         4f, 0f, -4f,
+         4f, 3f, -4f,
+         4f, 3f, 4f,
+         4f, 0F , +04F
+    };
+
+        // Создаем Vertex Array Object для стен
+        _wallVertexArrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(_wallVertexArrayObject);
+
+        // Создаем Vertex Buffer Object для стен
+        _wallVertexBufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, _wallVertexBufferObject);
+
+        // Загружаем данные вершин в буфер
+        GL.BufferData(BufferTarget.ArrayBuffer, _wallVertices.Count * sizeof(float), _wallVertices.ToArray(), BufferUsageHint.StaticDraw);
+
+        // Настраиваем указатель атрибута вершин
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+        GL.EnableVertexAttribArray(0);
+
+        // Освобождаем буфер и массив вершин
+        GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+        GL.BindVertexArray(0);
+    }
+
 
     /**
      * Вызывается при изменении размера окна.
@@ -298,6 +353,8 @@ public class Game : GameWindow
         // Отрисовка потолка
         DrawRoof();
 
+        DrawWalls();
+
         // Отрисовка объектов (диван и стол)
         DrawObjects();
 
@@ -318,6 +375,21 @@ public class Game : GameWindow
         GL.Color3(0.95f, 0.87f, 0.68f); // Бежевый цвет для потолка
         GL.BindVertexArray(_roofVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
+    }
+
+    private void DrawWalls()
+    {
+        GL.Color3(0.0f, 0.6f, 0.6f); // Серый цвет для стен
+        GL.BindVertexArray(_wallVertexArrayObject);
+
+        // Отрисовываем каждую стену по отдельности
+        // Каждая стена состоит из 4 вершин (квадрат)
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4);  // Передняя стена
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 4, 4);  // Задняя стена
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 8, 4);  // Левая стена
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 12, 4); // Правая стена
+
+        GL.BindVertexArray(0); // Освобождаем VAO
     }
 
     private void DrawObjects()
