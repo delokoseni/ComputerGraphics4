@@ -1,22 +1,22 @@
-﻿using OpenTK.Windowing.Desktop;
-using System;
+﻿using OpenTK.Mathematics;
+using OpenTK.Windowing.Common;
+using OpenTK.Windowing.Desktop;
 
-public class Program
+public static class Program
 {
-    [STAThread]
-    public static void Main()
+    private static void Main()
     {
-        NativeWindowSettings nativeWindowSettings = new NativeWindowSettings()
+        var nativeWindowSettings = new NativeWindowSettings()
         {
-            ClientSize = new OpenTK.Mathematics.Vector2i(800, 600),
-            Title = "Kitchen",
-            Flags = OpenTK.Windowing.Common.ContextFlags.Default,
-            Profile = OpenTK.Windowing.Common.ContextProfile.Compatability
+            ClientSize = new Vector2i(800, 600),
+            Title = "LearnOpenTK - Textures",
+            // This is needed to run on macos
+            Flags = ContextFlags.ForwardCompatible,
         };
 
-        using (Game game = new Game(GameWindowSettings.Default, nativeWindowSettings))
+        using (var window = new Game(GameWindowSettings.Default, nativeWindowSettings))
         {
-            game.Run();
+            window.Run();
         }
     }
 }
