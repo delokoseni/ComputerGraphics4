@@ -35,6 +35,7 @@ public class Game : GameWindow
 
     private Shader _shader;
 
+    // For documentation on this, check Texture.cs.
     private Texture _texture;
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -54,8 +55,8 @@ public class Game : GameWindow
         base.OnLoad();
         float[] borderColor = { 1.0f, 1.0f, 0.0f, 1.0f };
         GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, borderColor);
-        LoadModel("C:/Users/artur/source/repos/ComputerGraphics4/bin/Debug/models/couch.obj");
-        LoadTexture("C:/Users/artur/source/repos/ComputerGraphics4/hungarian-point-flooring_albedo.png");
+        LoadModel("Models/couch.obj");
+        LoadTexture("Resources/hungarian-point-flooring_albedo.png");
         LoadShaders();
         SetupBuffers();
         SetupFloorBuffers();
@@ -80,8 +81,8 @@ public class Game : GameWindow
 
     private void LoadShaders()
     {
-        string vertexShaderSource = System.IO.File.ReadAllText("C:/Users/artur/source/repos/ComputerGraphics4/Shaders/shader.vert");
-        string fragmentShaderSource = System.IO.File.ReadAllText("C:/Users/artur/source/repos/ComputerGraphics4/Shaders/shader.frag");
+        string vertexShaderSource = System.IO.File.ReadAllText("Shaders/shader.vert");
+        string fragmentShaderSource = System.IO.File.ReadAllText("Shaders/shader.frag");
 
         int vertexShader = CompileShader(vertexShaderSource, ShaderType.VertexShader);
         int fragmentShader = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
