@@ -58,7 +58,7 @@ public class Game : GameWindow
         LoadModel("Models/couch.obj", _coachVertices, pos);
         SetupBuffers(_coachVertices, out _coachBufferObject, out _coachArrayObject);
 
-        Vector3D pos1 = new Vector3D(5.0f, -2.0f, 0.0f);
+        Vector3D pos1 = new Vector3D(5.0f, -2.5f, 0.0f);
         _tableandchairsVertices = new List<float>();
         LoadModel("Models/Table And Chairs.obj", _tableandchairsVertices, pos1);
         SetupBuffers(_tableandchairsVertices, out _tableandchairsBufferObject, out _tableandchairsArrayObject);
@@ -264,6 +264,8 @@ public class Game : GameWindow
         Matrix4 view = Matrix4.LookAt(_cameraPosition, _cameraPosition + front, Vector3.UnitY);
         GL.MatrixMode(MatrixMode.Modelview);
         GL.LoadMatrix(ref view);
+
+        GL.Enable(EnableCap.DepthTest); //Тестирование глубины, так объекты "непрозрачны"
 
         // Отрисовка пола
         GL.Color3(0.8f, 0.52f, 0.25f);
