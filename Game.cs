@@ -11,9 +11,13 @@ using ComputerGraphics4;
 
 public class Game : GameWindow
 {
-    private int _vertexBufferObject;
-    private int _vertexArrayObject;
-    private List<float> _vertices;
+    private int _coachBufferObject;
+    private int _coachArrayObject;
+    private List<float> _coachVertices;
+
+    private int _tableandchairsBufferObject;
+    private int _tableandchairsArrayObject;
+    private List<float> _tableandchairsVertices;
 
     private Vector3 _cameraPosition;
     private float _cameraYaw;
@@ -29,13 +33,8 @@ public class Game : GameWindow
     private int _roofVertexArrayObject;
     private List<float> _roofVertices;
 
-    private int _textureId;
-
-    private int _shaderProgram;
-
     private Shader _shader;
 
-    // For documentation on this, check Texture.cs.
     private Texture _texture;
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
@@ -54,55 +53,25 @@ public class Game : GameWindow
     {
         base.OnLoad();
         float[] borderColor = { 1.0f, 1.0f, 0.0f, 1.0f };
-        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureBorderColor, borderColor);
-        LoadModel("Models/couch.obj");
-        LoadTexture("Resources/hungarian-point-flooring_albedo.png");
-        LoadShaders();
-        SetupBuffers();
+        Vector3D pos = new Vector3D(0.0f, 0.0f, 0.0f);
+        _coachVertices = new List<float>();
+        LoadModel("Models/couch.obj", _coachVertices, pos);
+        SetupBuffers(_coachVertices, out _coachBufferObject, out _coachArrayObject);
+
+        Vector3D pos1 = new Vector3D(5.0f, -2.0f, 0.0f);
+        _tableandchairsVertices = new List<float>();
+        LoadModel("Models/Table And Chairs.obj", _tableandchairsVertices, pos1);
+        SetupBuffers(_tableandchairsVertices, out _tableandchairsBufferObject, out _tableandchairsArrayObject);
+
         SetupFloorBuffers();
         SetupRoofBuffers();
     }
 
-    private int CompileShader(string shaderSource, ShaderType type)
-    {
-        int shader = GL.CreateShader(type);
-        GL.ShaderSource(shader, shaderSource);
-        GL.CompileShader(shader);
-
-        GL.GetShader(shader, ShaderParameter.CompileStatus, out int success);
-        if (success == 0)
-        {
-            string infoLog = GL.GetShaderInfoLog(shader);
-            throw new Exception($"Ошибка компиляции шейдера: {infoLog}");
-        }
-
-        return shader;
-    }
-
-    private void LoadShaders()
-    {
-        string vertexShaderSource = System.IO.File.ReadAllText("Shaders/shader.vert");
-        string fragmentShaderSource = System.IO.File.ReadAllText("Shaders/shader.frag");
-
-        int vertexShader = CompileShader(vertexShaderSource, ShaderType.VertexShader);
-        int fragmentShader = CompileShader(fragmentShaderSource, ShaderType.FragmentShader);
-
-        _shaderProgram = GL.CreateProgram();
-        GL.AttachShader(_shaderProgram, vertexShader);
-        GL.AttachShader(_shaderProgram, fragmentShader);
-        GL.LinkProgram(_shaderProgram);
-
-        GL.DeleteShader(vertexShader);
-        GL.DeleteShader(fragmentShader);
-    }
-
-
-    private void LoadModel(string path)
+    private void LoadModel(string path, List<float> vertices, Vector3D position)
     {
         AssimpContext importer = new AssimpContext();
         var scene = importer.ImportFile(path, PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs);
 
-        _vertices = new List<float>();
         Vector3D min = new Vector3D(float.MaxValue, float.MaxValue, float.MaxValue);
         Vector3D max = new Vector3D(float.MinValue, float.MinValue, float.MinValue);
 
@@ -110,9 +79,9 @@ public class Game : GameWindow
         {
             foreach (var vertex in mesh.Vertices)
             {
-                _vertices.Add(vertex.X);
-                _vertices.Add(vertex.Y + 300);
-                _vertices.Add(vertex.Z);
+                vertices.Add(vertex.X);
+                vertices.Add(vertex.Y + 300);
+                vertices.Add(vertex.Z);
 
                 // Обновите минимумы и максимумы
                 min.X = Math.Min(min.X, vertex.X);
@@ -128,22 +97,23 @@ public class Game : GameWindow
         Vector3D center = (min + max) / 2;
         float scaleFactor = 1f / Math.Max(Math.Max(max.X - min.X, max.Y - min.Y), max.Z - min.Z); // Скаляр для нормализации
 
-        for (int i = 0; i < _vertices.Count; i += 3)
+        for (int i = 0; i < vertices.Count; i += 3)
         {
-            _vertices[i] = (_vertices[i] - center.X) * scaleFactor;   // X
-            _vertices[i + 1] = (_vertices[i + 1] - center.Y) * scaleFactor; // Y
-            _vertices[i + 2] = (_vertices[i + 2] - center.Z) * scaleFactor; // Z
+            vertices[i] = (vertices[i] - center.X) * scaleFactor + position.X;   // X
+            vertices[i + 1] = (vertices[i + 1] - center.Y) * scaleFactor + position.Y; // Y
+            vertices[i + 2] = (vertices[i + 2] - center.Z) * scaleFactor + position.Z; // Z
         }
     }
 
-    private void SetupBuffers()
-    {
-        _vertexArrayObject = GL.GenVertexArray();
-        GL.BindVertexArray(_vertexArrayObject);
 
-        _vertexBufferObject = GL.GenBuffer();
-        GL.BindBuffer(BufferTarget.ArrayBuffer, _vertexBufferObject);
-        GL.BufferData(BufferTarget.ArrayBuffer, _vertices.Count * sizeof(float), _vertices.ToArray(), BufferUsageHint.StaticDraw);
+    private void SetupBuffers(List<float> vertices, out int bufferObject, out int arrayObject)
+    {
+        arrayObject = GL.GenVertexArray();
+        GL.BindVertexArray(arrayObject);
+
+        bufferObject = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, bufferObject);
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * sizeof(float), vertices.ToArray(), BufferUsageHint.StaticDraw);
 
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
         GL.EnableVertexAttribArray(0);
@@ -151,6 +121,7 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         GL.BindVertexArray(0);
     }
+
 
     private void SetupFloorBuffers()
     {
@@ -279,8 +250,9 @@ public class Game : GameWindow
      */
     protected override void OnRenderFrame(FrameEventArgs e)
     {
+        // Очистка экрана
         GL.ClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-        GL.Clear(ClearBufferMask.ColorBufferBit);
+        GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
         // Установка матрицы видового преобразования
         Vector3 front = new Vector3(
@@ -293,25 +265,32 @@ public class Game : GameWindow
         GL.MatrixMode(MatrixMode.Modelview);
         GL.LoadMatrix(ref view);
 
-        //GL.UseProgram(_shaderProgram);
-
         // Отрисовка пола
-        GL.BindTexture(TextureTarget.Texture2D, _textureId);  // Привязываем текстуру перед отрисовкой
-
+        GL.Color3(0.8f, 0.52f, 0.25f);
         GL.BindVertexArray(_floorVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
         GL.BindVertexArray(0);
 
         // Отрисовка потолка
+        GL.Color3(0.95f, 0.87f, 0.68f);
         GL.BindVertexArray(_roofVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
         GL.BindVertexArray(0);
 
-        GL.BindVertexArray(_vertexArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _vertices.Count / 3);
+        // Отрисовка дивана
+        GL.Color3(1.0f, 1.0f, 1.0f);
+        GL.BindVertexArray(_coachArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _coachVertices.Count / 3); // Отрисовываем диван
         GL.BindVertexArray(0);
 
+        // Отрисовка стола и стульев
+        GL.BindVertexArray(_tableandchairsArrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _tableandchairsVertices.Count / 3); // Отрисовываем стол и стулья
+        GL.BindVertexArray(0);
+
+        // Обмен буферов
         SwapBuffers();
+
         base.OnRenderFrame(e);
     }
 
@@ -320,29 +299,10 @@ public class Game : GameWindow
      */
     protected override void OnUnload()
     {
-        GL.DeleteVertexArray(_vertexArrayObject);
-        GL.DeleteBuffer(_vertexBufferObject);
+        GL.DeleteVertexArray(_coachArrayObject);
+        GL.DeleteBuffer(_coachBufferObject);
         GL.DeleteVertexArray(_floorVertexArrayObject); 
         GL.DeleteBuffer(_floorVertexBufferObject);
         base.OnUnload();
-    }
-
-    private void LoadTexture(string path)
-    {
-        // Загружаем текстуру
-        _textureId = GL.GenTexture();
-        GL.BindTexture(TextureTarget.Texture2D, _textureId);
-
-        using (var image = new Bitmap(path))
-        {
-            var data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height),
-                ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, data.Width, data.Height, 0,
-                OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-            image.UnlockBits(data);
-        }
-
-        GL.GenerateMipmap(GenerateMipmapTarget.Texture2D);
-        GL.BindTexture(TextureTarget.Texture2D, 0);
     }
 }
