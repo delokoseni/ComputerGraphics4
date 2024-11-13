@@ -134,6 +134,17 @@ public class Game : GameWindow
         }
     }
 
+    private void DrawRotatedObject(int arrayObject, List<float> vertices, float angle)
+    {
+        GL.PushMatrix(); // Сохраняем текущую матрицу
+        GL.Rotate(angle, 0.0f, 1.0f, 0.0f); // Поворачиваем объект вокруг оси Y
+
+        GL.BindVertexArray(arrayObject);
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, vertices.Count / 3); // Отрисовка объекта
+
+        GL.PopMatrix(); // Восстанавливаем матрицу
+    }
+
 
     private void SetupBuffers(List<float> vertices, out int bufferObject, out int arrayObject)
     {
@@ -396,13 +407,11 @@ public class Game : GameWindow
     private void DrawObjects()
     {
         // Отрисовка дивана
-        GL.Color3(1.0f, 1.0f, 1.0f);
-        GL.BindVertexArray(_coachArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _coachVertices.Count / 3);
+        GL.Color3(1.0f, 1.0f, 1.0f); // Цвет дивана
+        DrawRotatedObject(_coachArrayObject, _coachVertices, 90.0f); // Поворот на 90 градусов
 
         // Отрисовка стола и стульев
-        GL.BindVertexArray(_tableandchairsArrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, _tableandchairsVertices.Count / 3);
+        DrawRotatedObject(_tableandchairsArrayObject, _tableandchairsVertices, 45.0f);
     }
 
     /**
