@@ -19,6 +19,18 @@ public class Game : GameWindow
     private int _tableandchairsArrayObject;
     private List<float> _tableandchairsVertices;
 
+    private int _fridgeBufferObject;
+    private int _fridgeArrayObject;
+    private List<float> _fridgeVertices;
+
+    private int _kitchenBufferObject;
+    private int _kitchenArrayObject;
+    private List<float> _kitchenVertices;
+
+    private int _ovenBufferObject;
+    private int _ovenArrayObject;
+    private List<float> _ovenVertices;
+
     private Vector3 _cameraPosition;
     private float _cameraYaw;
     private float _cameraPitch;
@@ -37,7 +49,13 @@ public class Game : GameWindow
     private int _wallVertexArrayObject;
     private List<float> _wallVertices;
 
-    float[] lightPosition = { 3.5f, 4.5f, 0.0f, 1.0f };
+    Vector3D pos = new Vector3D(0.0f, 0.1f, 0.0f);
+    Vector3D pos1 = new Vector3D(1.0f, 0.1f, 1.25f);
+    Vector3D pos2 = new Vector3D(-1.6f, 0.4f, 1.65f); //Холодильник
+    Vector3D pos3 = new Vector3D(-1.9f, 0.25f, -1.5f); //Кухоный гарнитур
+    Vector3D pos4 = new Vector3D(-1.7f, 0.15f, -0.8f); //плита
+
+    float[] lightPosition = { 1.9f, 1.9f, 0.0f, 1.0f };
     float[] lightPositionSecond = { 0.0f, 4.5f, 3.5f, 1.0f };
 
     private Shader _shader;
@@ -61,8 +79,8 @@ public class Game : GameWindow
         base.OnLoad();
 
         // Инициализация освещения
-        GL.Enable(EnableCap.Lighting);
-        GL.Enable(EnableCap.Light0); // Включаем первый источник света
+        //GL.Enable(EnableCap.Lighting);
+        //GL.Enable(EnableCap.Light0); // Включаем первый источник света
 
         // Установка свойств источника света
         float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет 
@@ -80,16 +98,25 @@ public class Game : GameWindow
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, materialSpecular);
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, shininess);
 
-
-        Vector3D pos = new Vector3D(0.0f, 0.0f, 0.0f);
         _coachVertices = new List<float>();
         LoadModel("Models/couch.obj", _coachVertices, pos);
         SetupBuffers(_coachVertices, out _coachBufferObject, out _coachArrayObject);
 
-        Vector3D pos1 = new Vector3D(2.0f, -2.5f, -1.0f);
         _tableandchairsVertices = new List<float>();
-        LoadModel("Models/Table And Chairs.obj", _tableandchairsVertices, pos1);
+        LoadModel("Models/Table And Chairs.obj", _tableandchairsVertices, pos);
         SetupBuffers(_tableandchairsVertices, out _tableandchairsBufferObject, out _tableandchairsArrayObject);
+
+        _fridgeVertices = new List<float>();
+        LoadModel("Models/Samsung_Fridge_low.obj", _fridgeVertices, pos);
+        SetupBuffers(_fridgeVertices, out _fridgeBufferObject, out _fridgeArrayObject);
+
+        _kitchenVertices = new List<float>();
+        LoadModel("Models/кухня.obj", _kitchenVertices, pos);
+        SetupBuffers(_kitchenVertices, out _kitchenBufferObject, out _kitchenArrayObject);
+
+        _ovenVertices = new List<float>();
+        LoadModel("Models/oven.obj", _ovenVertices, pos);
+        SetupBuffers(_ovenVertices, out _ovenBufferObject, out _ovenArrayObject);
 
         SetupFloorBuffers();
         SetupRoofBuffers();
@@ -109,10 +136,9 @@ public class Game : GameWindow
             foreach (var vertex in mesh.Vertices)
             {
                 vertices.Add(vertex.X);
-                vertices.Add(vertex.Y + 300);
+                vertices.Add(vertex.Y); 
                 vertices.Add(vertex.Z);
 
-                // Обновите минимумы и максимумы
                 min.X = Math.Min(min.X, vertex.X);
                 min.Y = Math.Min(min.Y, vertex.Y);
                 min.Z = Math.Min(min.Z, vertex.Z);
@@ -122,25 +148,30 @@ public class Game : GameWindow
             }
         }
 
-        // Нормализация и центрирование
         Vector3D center = (min + max) / 2;
-        float scaleFactor = 1f / Math.Max(Math.Max(max.X - min.X, max.Y - min.Y), max.Z - min.Z); // Скаляр для нормализации
+        float scaleFactor = 1f / Math.Max(Math.Max(max.X - min.X, max.Y - min.Y), max.Z - min.Z);
 
         for (int i = 0; i < vertices.Count; i += 3)
         {
-            vertices[i] = (vertices[i] - center.X) * scaleFactor + position.X;   // X
-            vertices[i + 1] = (vertices[i + 1] - center.Y) * scaleFactor + position.Y; // Y
-            vertices[i + 2] = (vertices[i + 2] - center.Z) * scaleFactor + position.Z; // Z
+            vertices[i] = (vertices[i] - center.X) * scaleFactor + position.X;
+            vertices[i + 1] = (vertices[i + 1] - center.Y) * scaleFactor + position.Y;
+            vertices[i + 2] = (vertices[i + 2] - center.Z) * scaleFactor + position.Z;
         }
     }
 
-    private void DrawRotatedObject(int arrayObject, List<float> vertices, float angle)
+    private void DrawRotatedObject(int arrayObject, List<float> vertices, Vector3D position, float angle)
     {
         GL.PushMatrix(); // Сохраняем текущую матрицу
-        GL.Rotate(angle, 0.0f, 1.0f, 0.0f); // Поворачиваем объект вокруг оси Y
 
+        // Перемещаем объект в его позицию
+        GL.Translate(position.X, position.Y, position.Z);
+
+        // Поворачиваем объект вокруг своей оси Y
+        GL.Rotate(angle, 0.0f, 1.0f, 0.0f);
+
+        // Отрисовка объекта
         GL.BindVertexArray(arrayObject);
-        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, vertices.Count / 3); // Отрисовка объекта
+        GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, vertices.Count / 3);
 
         GL.PopMatrix(); // Восстанавливаем матрицу
     }
@@ -168,10 +199,10 @@ public class Game : GameWindow
         _floorVertices = new List<float>
     {
         // Позиции               // Текстурные координаты
-        -4f, 0f, -4f, 0.0f, 0.0f, // Нижний левый угол
-        4f, 0f, -4f, 1.0f, 0.0f,  // Нижний правый угол
-        4f, 0f, 4f, 1.0f, 1.0f,   // Верхний правый угол
-        -4f, 0f, 4f, 0.0f, 1.0f   // Верхний левый угол
+        -2f, 0f, -2f, 0.0f, 0.0f, // Нижний левый угол
+        2f, 0f, -2f, 1.0f, 0.0f,  // Нижний правый угол
+        2f, 0f, 2f, 1.0f, 1.0f,   // Верхний правый угол
+        -2f, 0f, 2f, 0.0f, 1.0f   // Верхний левый угол
     };
 
         _floorVertexArrayObject = GL.GenVertexArray();
@@ -200,10 +231,10 @@ public class Game : GameWindow
         _roofVertices = new List<float>
     {
 
-        -4f, 3f, -4f,
-         4f, 3f, -4f,
-         4f, 3f, 4f,
-        -4f, 3f, 4f,
+        -2f, 2f, -2f,
+         2f, 2f, -2f,
+         2f, 2f, 2f,
+        -2f, 2f, 2f,
     };
 
         _roofVertexArrayObject = GL.GenVertexArray();
@@ -226,28 +257,28 @@ public class Game : GameWindow
         _wallVertices = new List<float>
     {
         // Передняя стена
-        -4f, 0f, -4f,
-        -4f, 3f, -4f,
-         4f, 3f, -4f,
-         4f, 0f, -4f,
+        -2f, 0f, -2f,
+        -2f, 2f, -2f,
+         2f, 2f, -2f,
+         2f, 0f, -2f,
 
         // Задняя стена
-        -4f, 0f, 4f,
-        -4f, 3f, 4f,
-         4f, 3f, 4f,
-         4f, 0f, 4f,
+        -2f, 0f, 2f,
+        -2f, 2f, 2f,
+         2f, 2f, 2f,
+         2f, 0f, 2f,
 
         // Левая стена
-        -4f, 0f, -4f,
-        -4f, 3f, -4f,
-        -4f, 3f, 4f,
-        -4f, 0f, 4f,
+        -2f, 0f, -2f,
+        -2f, 2f, -2f,
+        -2f, 2f, 2f,
+        -2f, 0f, 2f,
 
         // Правая стена
-         4f, 0f, -4f,
-         4f, 3f, -4f,
-         4f, 3f, 4f,
-         4f, 0F , +04F
+         2f, 0f, -2f,
+         2f, 2f, -2f,
+         2f, 2f, 2f,
+         2f, 0f , 2f
     };
 
         // Создаем Vertex Array Object для стен
@@ -408,10 +439,16 @@ public class Game : GameWindow
     {
         // Отрисовка дивана
         GL.Color3(1.0f, 1.0f, 1.0f); // Цвет дивана
-        DrawRotatedObject(_coachArrayObject, _coachVertices, 90.0f); // Поворот на 90 градусов
+        DrawRotatedObject(_coachArrayObject, _coachVertices, pos, 90.0f); // Поворот на 90 градусов
 
         // Отрисовка стола и стульев
-        DrawRotatedObject(_tableandchairsArrayObject, _tableandchairsVertices, 45.0f);
+        DrawRotatedObject(_tableandchairsArrayObject, _tableandchairsVertices, pos1, 45.0f);
+
+        DrawRotatedObject(_fridgeArrayObject, _fridgeVertices, pos2, 90.0f);
+
+        DrawRotatedObject(_kitchenArrayObject, _kitchenVertices, pos3, 90.0f);
+
+        DrawRotatedObject(_ovenArrayObject, _ovenVertices, pos4, 90.0f);
     }
 
     /**
@@ -421,8 +458,11 @@ public class Game : GameWindow
     {
         GL.DeleteVertexArray(_coachArrayObject);
         GL.DeleteBuffer(_coachBufferObject);
+        GL.DeleteBuffer(_fridgeBufferObject);
+        GL.DeleteBuffer(_tableandchairsBufferObject);
         GL.DeleteVertexArray(_floorVertexArrayObject); 
         GL.DeleteBuffer(_floorVertexBufferObject);
+        GL.DeleteBuffer(_wallVertexBufferObject);
         base.OnUnload();
     }
 }
