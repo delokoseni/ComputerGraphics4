@@ -55,7 +55,7 @@ public class Game : GameWindow
     Vector3D pos3 = new Vector3D(-1.9f, 0.25f, -1.5f); //Кухоный гарнитур
     Vector3D pos4 = new Vector3D(-1.7f, 0.15f, -0.8f); //плита
 
-    float[] lightPosition = { 1.9f, 1.9f, 0.0f, 1.0f };
+    float[] lightPosition = { 0f, 1.9f, 0.0f, 1.0f };
     float[] lightPositionSecond = { 0.0f, 4.5f, 3.5f, 1.0f };
 
     private Shader _shader;
@@ -79,8 +79,8 @@ public class Game : GameWindow
         base.OnLoad();
 
         // Инициализация освещения
-        //GL.Enable(EnableCap.Lighting);
-        //GL.Enable(EnableCap.Light0); // Включаем первый источник света
+        GL.Enable(EnableCap.Lighting);
+        GL.Enable(EnableCap.Light0); // Включаем первый источник света
 
         // Установка свойств источника света
         float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет 
