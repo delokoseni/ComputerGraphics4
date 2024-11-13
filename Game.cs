@@ -37,7 +37,8 @@ public class Game : GameWindow
     private int _wallVertexArrayObject;
     private List<float> _wallVertices;
 
-    float[] lightPosition = { 20.0f, 5.0f, 20.0f, 1.0f };
+    float[] lightPosition = { 3.5f, 4.5f, 0.0f, 1.0f };
+    float[] lightPositionSecond = { 0.0f, 4.5f, 3.5f, 1.0f };
 
     private Shader _shader;
 
@@ -64,17 +65,16 @@ public class Game : GameWindow
         GL.Enable(EnableCap.Light0); // Включаем первый источник света
 
         // Установка свойств источника света
-        float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет (белый)
+        float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет 
         float[] lightSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем зеркальный свет (белый)
 
         GL.Light(LightName.Light0, LightParameter.Position, lightPosition);
         GL.Light(LightName.Light0, LightParameter.Diffuse, lightDiffuse);
         GL.Light(LightName.Light0, LightParameter.Specular, lightSpecular);
 
-        // Установка свойств материала для объектов
-        float[] materialDiffuse = { 0.8f, 0.5f, 0.3f, 1.0f }; // Диффузный цвет материала
-        float[] materialSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Зеркальный цвет материала
-        float shininess = 50.0f; // Гладкость поверхности
+        float[] materialDiffuse = { 1.0f, 0.8f, 0.3f, 1.0f }; // Яркий диффузный цвет (например, золотистый)
+        float[] materialSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Белый зеркальный цвет
+        float shininess = 100.0f; // Высокая гладкость для ярких отражений
 
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, materialDiffuse);
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, materialSpecular);
@@ -346,6 +346,7 @@ public class Game : GameWindow
 
         // Установка параметров источника света перед отрисовкой объектов
         GL.Light(LightName.Light0, LightParameter.Position, lightPosition);
+        GL.Light(LightName.Light0, LightParameter.Position, lightPositionSecond);
 
         // Отрисовка пола
         DrawFloor();
