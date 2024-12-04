@@ -35,7 +35,7 @@ public class Game : GameWindow
     private float _cameraYaw;
     private float _cameraPitch;
     private float _sensitivity = 0.05f;
-    private bool _isMouseMoving; // Добавляем переменную для отслеживания движения мыши
+    private bool _isMouseMoving; 
 
     private int _floorVertexBufferObject;
     private int _floorVertexArrayObject;
@@ -51,16 +51,14 @@ public class Game : GameWindow
 
     Vector3D pos = new Vector3D(0.0f, 0.1f, 0.0f);
     Vector3D pos1 = new Vector3D(1.0f, 0.1f, 1.25f);
-    Vector3D pos2 = new Vector3D(-1.6f, 0.4f, 1.65f); //Холодильник
-    Vector3D pos3 = new Vector3D(-1.9f, 0.25f, -1.5f); //Кухоный гарнитур
-    Vector3D pos4 = new Vector3D(-1.7f, 0.15f, -0.8f); //плита
+    Vector3D pos2 = new Vector3D(-1.6f, 0.4f, 1.65f); // Позиция холодильника
+    Vector3D pos3 = new Vector3D(-1.9f, 0.25f, -1.5f); // Позиция кухоного гарнитура
+    Vector3D pos4 = new Vector3D(-1.7f, 0.15f, -0.8f); // Позиция плиты
 
     float[] lightPosition = { 0f, 1.9f, 0.0f, 1.0f };
     float[] lightPositionSecond = { 0.0f, 4.5f, 3.5f, 1.0f };
 
-    private Shader _shader;
-
-    private Texture _texture;
+    private int _floorTexture;
 
     public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings)
         : base(gameWindowSettings, nativeWindowSettings)
@@ -81,6 +79,7 @@ public class Game : GameWindow
         // Инициализация освещения
         GL.Enable(EnableCap.Lighting);
         GL.Enable(EnableCap.Light0); // Включаем первый источник света
+        //GL.Enable(EnableCap.Texture2D);
 
         // Установка свойств источника света
         float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет 
@@ -90,6 +89,8 @@ public class Game : GameWindow
         GL.Light(LightName.Light0, LightParameter.Diffuse, lightDiffuse);
         GL.Light(LightName.Light0, LightParameter.Specular, lightSpecular);
         GL.LightModel(LightModelParameter.LightModelTwoSide, 0);
+
+        _floorTexture = LoadTexture("floor.jpg");
 
         // Установка свойств материала
         float[] materialDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Белый диффузный цвет
@@ -127,6 +128,9 @@ public class Game : GameWindow
         SetupWallBuffers();
     }
 
+    /**
+     * Метод для загрузки .obj моделей
+     */
     private void LoadModel(string path, List<float> vertices, Vector3D position)
     {
         AssimpContext importer = new AssimpContext();
@@ -163,6 +167,9 @@ public class Game : GameWindow
         }
     }
 
+    /**
+     * Метод для отрисовки моделей и их поворота
+     */
     private void DrawRotatedObject(int arrayObject, List<float> vertices, Vector3D position, float angle)
     {
         GL.PushMatrix(); // Сохраняем текущую матрицу
@@ -180,7 +187,6 @@ public class Game : GameWindow
         GL.PopMatrix(); // Восстанавливаем матрицу
     }
 
-
     private void SetupBuffers(List<float> vertices, out int bufferObject, out int arrayObject)
     {
         arrayObject = GL.GenVertexArray();
@@ -197,17 +203,17 @@ public class Game : GameWindow
         GL.BindVertexArray(0);
     }
 
-
     private void SetupFloorBuffers()
     {
         _floorVertices = new List<float>
-    {
-        // Позиции               // Текстурные координаты
-        -2f, 0f, -2f, 0.0f, 0.0f, // Нижний левый угол
-        2f, 0f, -2f, 1.0f, 0.0f,  // Нижний правый угол
-        2f, 0f, 2f, 1.0f, 1.0f,   // Верхний правый угол
-        -2f, 0f, 2f, 0.0f, 1.0f   // Верхний левый угол
-    };
+        {
+            // Позиции               // Текстурные координаты
+            -2f, 0f, -2f, 0.0f, 0.0f, // Нижний левый угол
+            2f, 0f, -2f, 1.0f, 0.0f,  // Нижний правый угол
+            2f, 0f, 2f, 1.0f, 1.0f,   // Верхний правый угол
+            -2f, 0f, 2f, 0.0f, 1.0f   // Верхний левый угол
+        };
+
 
         _floorVertexArrayObject = GL.GenVertexArray();
         GL.BindVertexArray(_floorVertexArrayObject);
@@ -216,7 +222,6 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, _floorVertexBufferObject);
         GL.BufferData(BufferTarget.ArrayBuffer, _floorVertices.Count * sizeof(float), _floorVertices.ToArray(), BufferUsageHint.StaticDraw);
 
-        // Вершинные атрибуты
         GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0); // Позиции
         GL.EnableVertexAttribArray(0);
 
@@ -227,9 +232,30 @@ public class Game : GameWindow
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         GL.BindVertexArray(0);
     }
+    private int LoadTexture(string path)
+    {
+        using (Bitmap bitmap = new Bitmap(path)) // .jpg также поддерживается
+        {
+            int textureId;
+            GL.GenTextures(1, out textureId);
+            GL.BindTexture(TextureTarget.Texture2D, textureId);
 
+            // Установка параметров текстуры
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
 
+            // Загрузка данных текстуры
+            BitmapData data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0, OpenTK.Graphics.OpenGL.PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
+            bitmap.UnlockBits(data);
 
+            // Установка обертки текстуры
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)OpenTK.Graphics.OpenGL.TextureWrapMode.Repeat);
+
+            return textureId;
+        }
+    }
     private void SetupRoofBuffers()
     {
         _roofVertices = new List<float>
@@ -402,7 +428,7 @@ public class Game : GameWindow
 
         DrawWalls();
 
-        // Отрисовка объектов (диван и стол)
+        // Отрисовка объектов 
         DrawObjects();
 
         SwapBuffers();
@@ -412,21 +438,20 @@ public class Game : GameWindow
 
     private void DrawFloor()
     {
-        GL.Color3(0.8f, 0.52f, 0.25f); // Светло-коричневый цвет для пола
+        GL.BindTexture(TextureTarget.Texture2D, _floorTexture); // Привязка текстуры
         GL.BindVertexArray(_floorVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем пол
     }
 
+
     private void DrawRoof()
     {
-        GL.Color3(0.95f, 0.87f, 0.68f); // Бежевый цвет для потолка
         GL.BindVertexArray(_roofVertexArrayObject);
         GL.DrawArrays(OpenTK.Graphics.OpenGL.PrimitiveType.Quads, 0, 4); // Отрисовываем потолок
     }
 
     private void DrawWalls()
     {
-        GL.Color3(0.0f, 0.6f, 0.6f); // Серый цвет для стен
         GL.BindVertexArray(_wallVertexArrayObject);
 
         // Отрисовываем каждую стену по отдельности
@@ -441,17 +466,10 @@ public class Game : GameWindow
 
     private void DrawObjects()
     {
-        // Отрисовка дивана
-        GL.Color3(1.0f, 1.0f, 1.0f); // Цвет дивана
         DrawRotatedObject(_coachArrayObject, _coachVertices, pos, 90.0f); // Поворот на 90 градусов
-
-        // Отрисовка стола и стульев
         DrawRotatedObject(_tableandchairsArrayObject, _tableandchairsVertices, pos1, 45.0f);
-
         DrawRotatedObject(_fridgeArrayObject, _fridgeVertices, pos2, 90.0f);
-
         DrawRotatedObject(_kitchenArrayObject, _kitchenVertices, pos3, 90.0f);
-
         DrawRotatedObject(_ovenArrayObject, _ovenVertices, pos4, 90.0f);
     }
 
