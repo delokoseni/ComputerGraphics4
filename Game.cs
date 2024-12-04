@@ -84,18 +84,22 @@ public class Game : GameWindow
 
         // Установка свойств источника света
         float[] lightDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем диффузный свет 
-        float[] lightSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем зеркальный свет (белый)
+        float[] lightSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Увеличиваем зеркальный свет
 
         GL.Light(LightName.Light0, LightParameter.Position, lightPosition);
         GL.Light(LightName.Light0, LightParameter.Diffuse, lightDiffuse);
         GL.Light(LightName.Light0, LightParameter.Specular, lightSpecular);
+        GL.LightModel(LightModelParameter.LightModelTwoSide, 0);
 
-        float[] materialDiffuse = { 1.0f, 0.8f, 0.3f, 1.0f }; // Яркий диффузный цвет (например, золотистый)
+        // Установка свойств материала
+        float[] materialDiffuse = { 1.0f, 1.0f, 1.0f, 1.0f }; // Белый диффузный цвет
         float[] materialSpecular = { 1.0f, 1.0f, 1.0f, 1.0f }; // Белый зеркальный цвет
+        float[] materialAmbient = { 1.0f, 1.0f, 1.0f, 1.0f }; // Белый окружный цвет
         float shininess = 100.0f; // Высокая гладкость для ярких отражений
 
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Diffuse, materialDiffuse);
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Specular, materialSpecular);
+        GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Ambient, materialAmbient);
         GL.Material(MaterialFace.FrontAndBack, MaterialParameter.Shininess, shininess);
 
         _coachVertices = new List<float>();
